@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Add a friend on Zunoki</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font: 17px/1.6 -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; max-width: 30rem; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; text-align: center; }
+  h1 { font-size: 1.75rem; margin: 0 0 .5rem; }
+  .code { font: 700 1.5rem ui-monospace, Menlo, monospace; letter-spacing: .1em; margin: 1rem 0; }
+  .btn { display: block; margin: .75rem 0; padding: .9rem 1rem; border-radius: 14px; background: #5b3fd0; color: #fff; text-decoration: none; font-weight: 700; border: 0; width: 100%; font-size: 1rem; cursor: pointer; }
+  .btn.alt { background: transparent; color: inherit; border: 2px solid #8a7be0; }
+  .muted { opacity: .7; font-size: .95rem; }
+</style>
+</head>
+<body>
+<h1 id="title">Add a friend on Zunoki</h1>
+<p>Open this on the phone that has Zunoki.</p>
+<div class="code" id="code"></div>
+<a class="btn" id="open" href="#">Open Zunoki</a>
+<p class="muted">Don't have it yet? It's free.</p>
+<a class="btn alt" href="https://apps.apple.com/app/id6818481755">App Store (iPhone and iPad)</a>
+<a class="btn alt" href="https://play.google.com/store/apps/details?id=com.brainlevelup.spry">Google Play (Android)</a>
+<button class="btn alt" id="copy" type="button">Copy the friend code</button>
+<p class="muted">After you install it, tap Adventure, then Battle a Friend, then Your friends, and paste the code.</p>
+<script>
+  var q = new URLSearchParams(location.search);
+  var c = (q.get('c') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  var n = q.get('n') || '';
+  var ok = /^[BCDFGHJKLMNPQRSTVWXZ23456789]{10}$/.test(c);
+  // only a name made of letters and one space is shown (the app checks it against its own list too)
+  if (/^[A-Za-z]+ [A-Za-z]+$/.test(n)) document.getElementById('title').textContent = 'Add ' + n + ' on Zunoki';
+  if (ok) {
+    document.getElementById('code').textContent = c.slice(0, 5) + '-' + c.slice(5);
+    document.getElementById('open').href = 'zunoki://add?c=' + c + (n ? '&n=' + encodeURIComponent(n) : '');
+    document.getElementById('copy').onclick = function () {
+      if (navigator.clipboard) navigator.clipboard.writeText(c.slice(0, 5) + '-' + c.slice(5));
+      this.textContent = 'Copied';
+    };
+  } else {
+    document.getElementById('open').style.display = 'none';
+    document.getElementById('copy').style.display = 'none';
+    document.getElementById('code').textContent = 'This link has no friend code.';
+  }
+</script>
+</body>
+</html>
