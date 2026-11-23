@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Zunoki: Brain & Word Games</title>
+<meta name="description" content="Try a free Jumble word puzzle, then get Zunoki for iPhone, iPad or Android.">
 <style>
   :root { color-scheme: light dark; }
   body { font: 17px/1.6 -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; max-width: 42rem; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
@@ -13,7 +14,25 @@
   nav a { margin-right: 1rem; }
   .muted { opacity: .7; }
   a { color: #5b3fd0; }
+  .puzzle { margin: 2rem 0; padding: clamp(1rem, 4vw, 1.75rem); border: 1px solid #9d86f0; border-radius: 1.25rem; background: #f4efff; color: #251a43; }
+  .puzzle h2 { margin-top: 0; }
+  .clue { font-size: 1.125rem; font-weight: 650; }
+  .tiles { display: flex; flex-wrap: wrap; gap: .45rem; margin: 1rem 0; }
+  .tiles span { display: grid; place-items: center; width: 2.35rem; height: 2.65rem; border-radius: .45rem; background: #fff; border: 1px solid #a78de7; font-weight: 750; }
+  .puzzle label { display: block; margin-bottom: .25rem; font-weight: 600; }
+  .puzzle form > div { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .puzzle input, .puzzle button { box-sizing: border-box; min-height: 2.75rem; border: 1px solid #7b5fc8; border-radius: .5rem; padding: .45rem .7rem; font: inherit; }
+  .puzzle input { width: min(100%, 14rem); }
+  .puzzle button { background: #5833b7; color: white; cursor: pointer; }
+  .puzzle button:disabled { opacity: .75; cursor: default; }
+  .puzzle :focus-visible { outline: 3px solid #9a65f0; outline-offset: 3px; }
+  .puzzle [role="status"] { min-height: 1.6em; margin: .5rem 0 0; }
+  [hidden] { display: none !important; }
   @media (prefers-color-scheme: dark) { a { color: #b9a6ff; } }
+  @media (prefers-color-scheme: dark) {
+    .puzzle { background: #2b2044; color: #f6efff; }
+    .tiles span { background: #3d2d5b; }
+  }
 </style>
 </head>
 <body>
@@ -21,6 +40,22 @@
 <h1>Zunoki</h1>
 <p class="muted">Brain &amp; Word Games</p>
 <p>Three quick games a day: puzzles, words, listening and mental math, plus Expedition, where Sprig takes on monsters and bosses. Free, with no ads during play.</p>
+<section id="jumble" class="puzzle" aria-labelledby="jumble-title">
+  <h2 id="jumble-title">Play Jumble</h2>
+  <p>Use every tile once to spell the word that matches the clue.</p>
+  <p class="clue" id="jumble-clue">A small metal fastener that holds sheets of paper together.</p>
+  <p class="tiles" aria-label="Letters: P E S T L A"><span>P</span><span>E</span><span>S</span><span>T</span><span>L</span><span>A</span></p>
+  <form id="jumble-form" hidden>
+    <label for="jumble-answer">Your answer</label>
+    <div>
+      <input id="jumble-answer" type="text" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="jumble-clue" required>
+      <button id="jumble-check" type="submit">Check answer</button>
+    </div>
+    <p id="jumble-status" role="status"></p>
+    <button id="jumble-next" type="button" hidden>Next puzzle</button>
+  </form>
+  <noscript><details><summary>Reveal the answer</summary>STAPLE</details></noscript>
+</section>
 <h2>Get Zunoki</h2>
 <ul>
   <li><a href="https://apps.apple.com/app/id6818481755">Download on the App Store</a> (iPhone and iPad)</li>
@@ -31,5 +66,68 @@
   <li><a href="support.html">Support</a></li>
 </ul>
 <p class="muted">Made by ubecat studio.</p>
+<script>
+  const rounds = [
+    { clue: 'A small metal fastener that holds sheets of paper together.', letters: 'PESTLA', answer: 'STAPLE' },
+    { clue: 'To sign up for military service.', letters: 'NTEISL', answer: 'ENLIST' },
+    { clue: 'Holding a great deal of moisture in the air.', letters: 'DUMIH', answer: 'HUMID' },
+  ];
+  const form = document.querySelector('#jumble-form');
+  const clue = document.querySelector('#jumble-clue');
+  const tiles = document.querySelector('.tiles');
+  const input = document.querySelector('#jumble-answer');
+  const check = document.querySelector('#jumble-check');
+  const next = document.querySelector('#jumble-next');
+  const status = document.querySelector('#jumble-status');
+  let roundIndex = 0;
+
+  function showRound() {
+    const round = rounds[roundIndex];
+    clue.textContent = round.clue;
+    tiles.setAttribute('aria-label', `Letters: ${[...round.letters].join(' ')}`);
+    tiles.replaceChildren(...[...round.letters].map(letter => {
+      const tile = document.createElement('span');
+      tile.textContent = letter;
+      return tile;
+    }));
+    input.maxLength = round.letters.length;
+    input.value = '';
+    input.readOnly = false;
+    check.disabled = false;
+    next.hidden = true;
+    status.textContent = '';
+  }
+
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    if (check.disabled) return;
+    const round = rounds[roundIndex];
+    const answer = input.value.trim().toUpperCase();
+    if (answer !== round.answer) {
+      status.textContent = answer.length === round.letters.length
+        ? 'Try again. Check the clue and use each tile once.'
+        : `Use all ${round.letters.length} letters.`;
+      input.focus();
+      input.select();
+      return;
+    }
+    const lastRound = roundIndex === rounds.length - 1;
+    status.textContent = lastRound ? `Correct! ${round.answer}. You solved all three.` : `Correct! ${round.answer}.`;
+    input.readOnly = true;
+    next.textContent = lastRound ? 'Play again' : 'Next puzzle';
+    next.hidden = false;
+    next.focus();
+    check.disabled = true;
+  });
+
+  next.addEventListener('click', () => {
+    roundIndex = (roundIndex + 1) % rounds.length;
+    showRound();
+    input.focus();
+  });
+
+  showRound();
+  form.hidden = false;
+</script>
 </body>
 </html>
